@@ -1,54 +1,22 @@
-use rand::Rng;
 use std::io::prelude::*;
 use std::net::TcpStream;
+use std::thread;
+use std::time::Duration;
 
 fn main() -> std::io::Result<()> {
     let mut stream = TcpStream::connect("127.0.0.1:8080")?;
 
-    let mut is_starting = false;
-    coin_toss(is_starting, stream);
-    while true {
-        if is_starting {
-            let request = "Ping";
-            stream.write(request.as_bytes())?;
-            let mut response = String::new();
-            stream.read_to_string(&mut response)?;
-            println!("{}", response);
-        } else {
-            let mut response = String::new();
-            stream.read_to_string(&mut response)?;
-            println!("{}", response);
-            let request = "Pong";
-            stream.write(request.as_bytes())?;
-        }
-    }
+    loop {
+        let request = "Ping".to_string();
+        stream.write(request.as_bytes())?;
+        stream.flush().unwrap();
+        println!("Sent request: {}", request);
 
-    Ok(())
-}
-// returns a true if cointoss is over
-fn coin_toss(is_starting: bool, stream: TcpStream) {
-    let mut rng = rand::thread_rng();
-    let mut is_over = false;
-    let mut buf = [0; 1024];
-    while !is_over {
-        stream.read_exact(&mut buf);
-        let coin: u8 = rng.gen_range(0..=1);
-        stream.read_exact(&mut buf).unwrap();
-        let coin2: u8 = buf[0];
+        let mut response_buffer = [0; 1024]; // Read up to 1024 bytes
+        let num_bytes = stream.read(&mut response_buffer)?;
+        let response = String::from_utf8_lossy(&response_buffer[..num_bytes]).to_string();
+        println!("Received response: {}", response);
 
-        if coin < coin2 {
-            let lost: u8 = 2;
-            stream.write(&[lost as u8]).unwrap();
-            is_over = true;
-            is_starting = false;
-        }
-        if coin > coin2 {
-            let won: u8 = 3;
-            stream.write(&[won as u8]).unwrap();
-            is_over = true;
-            is_starting = true;
-        } else {
-            stream.write(&[coin as u8]).unwrap();
-        }
+        thread::sleep(Duration::from_secs(1));
     }
 }
