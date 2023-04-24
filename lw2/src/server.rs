@@ -1,5 +1,5 @@
-use std::net::TcpListener;
 use std::io::prelude::*;
+use std::net::TcpListener;
 use std::net::TcpStream;
 use std::thread;
 use std::time::Duration;
@@ -13,7 +13,7 @@ fn handle_client(mut stream: TcpStream, game_num: u32) {
         let request = String::from_utf8_lossy(&request_buffer[..num_bytes]).to_string();
         println!("Game {}: Received message: {}", game_num, request);
 
-        let response = "Pong".to_string();
+        let response = String::from("Pong");
         // writes response to the stream as a byte array
         stream.write(response.as_bytes()).unwrap();
         stream.flush().unwrap();
@@ -22,7 +22,6 @@ fn handle_client(mut stream: TcpStream, game_num: u32) {
         thread::sleep(Duration::from_secs(1));
     }
 }
-
 
 fn main() -> std::io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:8080")?;
